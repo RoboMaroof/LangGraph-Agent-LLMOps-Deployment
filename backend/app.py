@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+import uvicorn
 from contextlib import asynccontextmanager
 from ingestion.routes import router as ingestion_router
 from agents.routes import router as agent_router
@@ -73,5 +74,4 @@ async def log_request_time(request: Request, call_next):
     return response
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="localhost", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
