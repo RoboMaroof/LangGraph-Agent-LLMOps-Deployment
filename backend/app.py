@@ -3,7 +3,7 @@ import uvicorn
 from contextlib import asynccontextmanager
 from ingestion.routes import router as ingestion_router
 from agents.routes import router as agent_router
-from ingestion import create_index
+from ingestion import create_index, qdrant_collection_exists
 
 import os
 import time
@@ -22,10 +22,10 @@ SQL_DB_PATH = os.getenv("SQL_DB_PATH")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    index_exists = os.path.exists(VECTORDB_PATH)
-    if index_exists:
-        logger.info("📦 Existing vector index found. Skipping index creation.")
+    if qdrant_collection_exists():
+        logger.info("📦 Qdrant vector index already exists. Skipping index creation.")
     else:
+        logger.info("🆕 No vector index found in Qdrant. Creating a new one...")
         sources_ingested = []
 
         if DEFAULT_DOCS_FOLDER and os.path.exists(DEFAULT_DOCS_FOLDER):

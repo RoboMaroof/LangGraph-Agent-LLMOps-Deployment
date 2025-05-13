@@ -1,18 +1,28 @@
 import os
 from fastapi import UploadFile
-from pathlib import Path
-import shutil
 from dotenv import load_dotenv
+import boto3
+from pathlib import Path
+from urllib.parse import quote_plus
 
-env_path = Path(__file__).resolve().parents[1]/'.env'
+# AWS Configuration
+env_path = Path(__file__).resolve().parents[1] / '.env'
 load_dotenv(dotenv_path=env_path)
-UPLOADED_DOCS_FOLDER = os.getenv("UPLOADED_DOCS_FOLDER")
+
+AWS_REGION = os.getenv("AWS_REGION")
+S3_BUCKET = os.getenv("S3_BUCKET_NAME")
+
+# Initialize S3 client
+s3 = boto3.client("s3", region_name=AWS_REGION)
 
 def save_uploaded_file(uploaded_file: UploadFile) -> str:
-    Path(UPLOADED_DOCS_FOLDER).mkdir(parents=True, exist_ok=True)
-    file_path = os.path.join(UPLOADED_DOCS_FOLDER, uploaded_file.filename)
+    """
+    Uploads the uploaded file to the configured S3 bucket and returns the s3 URI.
+    """
+    s3_key = f"uploads/{quote_plus(uploaded_file.filename)}"
+    
+    # Upload the file to S3
+    s3.upload_fileobj(uploaded_file.file, S3_BUCKET, s3_key)
 
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(uploaded_file.file, buffer)
-
-    return file_path
+    # Return the S3 URI
+    return f"s3://{S3_BUCKET}/{s3_key}"
