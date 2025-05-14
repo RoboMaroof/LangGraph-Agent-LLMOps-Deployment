@@ -11,12 +11,9 @@ from llama_index.core.node_parser import SentenceSplitter
 from .sources import get_documents
 
 # Load environment variables
-env_path = Path(__file__).resolve().parents[1] / '.env'
-load_dotenv(dotenv_path=env_path)
-
 QDRANT_HOST = os.getenv("QDRANT_HOST")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
-QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "rag_docs")
+QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "langgraph-rag-vectordb")
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
