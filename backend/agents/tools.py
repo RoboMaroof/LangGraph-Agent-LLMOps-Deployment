@@ -6,7 +6,6 @@ from langchain.agents import Tool
 
 from llama_index.core.postprocessor import LLMRerank
 from llama_index.core.retrievers import VectorIndexRetriever
-from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.llms.openai import OpenAI
 
 from ingestion.index_builder import load_index
@@ -17,13 +16,13 @@ _cached_tools = None
 def build_tools():
     tools = []
 
-    # 🌐 Web tools
+    # Web tools
     tools.append(WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper(top_k_results=1, doc_content_chars_max=200)))
     tools.append(ArxivQueryRun(api_wrapper=ArxivAPIWrapper(top_k_results=1, doc_content_chars_max=200)))
     tools.append(TavilySearchResults())
 
     try:
-        # 🧠 Load vector index from Qdrant Cloud
+        # Load vector index from Qdrant Cloud
         index = load_index()
         if index:
             llm = OpenAI(model="gpt-4o-mini")
@@ -35,12 +34,22 @@ def build_tools():
                 postprocessors=[reranker]
             )
 
-            query_engine = RetrieverQueryEngine.from_args(retriever)
+            def query_debug(query: str):
+                logger.debug(f"🧠 Invoked vector retriever with query: {query}")
+                nodes = retriever.retrieve(query)
+                if not nodes:
+                    logger.warning("⚠️ No nodes retrieved from Qdrant.")
+                    return "Empty Response"
+                for i, node in enumerate(nodes):
+                    logger.debug(f"🔍 Node {i+1}: {node.get_text()[:300]}")
+                return "\n---\n".join([node.get_text() for node in nodes])
 
             retriever_tool = Tool(
                 name="vector_retriever",
-                func=query_engine.query,
-                description="🔍 Search across ingested documents using semantic search and reranking."
+                func=query_debug,
+                description=(
+                    "Use this tool to search and summarize uploaded documents like PDFs or master theses."
+                )
             )
 
             tools.append(retriever_tool)

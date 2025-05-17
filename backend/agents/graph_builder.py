@@ -67,6 +67,7 @@ class GraphBuilder:
         if not filtered_messages:
             raise ValueError("LLM node received no valid messages after filtering.")
 
+        logger.debug("🤖 Messages going to LLM:\n%s", filtered_messages)
         start = time.time()
         response = self.llm.invoke(filtered_messages)
         logger.info("⏱️ LLM invocation took %.2f seconds", time.time() - start)
@@ -156,7 +157,8 @@ class GraphBuilder:
                     retrieved_chunks.append({
                         "tool": tool_name, "type": "text", "data": content
                     })
-
+        logger.debug("🛠️ Tools used by LLM: %s", tools_used)
+        logger.debug("📦 Retrieved chunks: %s", retrieved_chunks)
         return {
             "final_output": final_output,
             "tools_used": tools_used,
