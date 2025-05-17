@@ -1,19 +1,23 @@
-from llama_index.readers.web import SimpleWebPageReader
-from llama_index.core import SimpleDirectoryReader, Document
 import sqlite3
 import os
 import boto3
 import tempfile
 from urllib.parse import urlparse
-from pathlib import Path
-import logging
 
-logger = logging.getLogger(__name__)
+from llama_index.readers.web import SimpleWebPageReader
+from llama_index.core import SimpleDirectoryReader, Document
+
+from utils.logger import get_logger
+
+
+logger = get_logger(__name__)
 s3 = boto3.client("s3")
 
 
 def download_s3_file(s3_uri: str) -> str:
-    """Download file from S3 to a temporary local file and return its path."""
+    """
+    Download file from S3 to a temporary local file and return its path.
+    """
     parsed = urlparse(s3_uri)
     bucket = parsed.netloc
     key = parsed.path.lstrip('/')
@@ -30,7 +34,9 @@ def download_s3_file(s3_uri: str) -> str:
 
 
 def list_s3_documents(bucket: str, prefix: str = "uploads/") -> list[str]:
-    """List all S3 object paths under a prefix, returning full S3 URIs."""
+    """
+    List all S3 object paths under a prefix, returning full S3 URIs.
+    """
     try:
         response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
         contents = response.get("Contents", [])

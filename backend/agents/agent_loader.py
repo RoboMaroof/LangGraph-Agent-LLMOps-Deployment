@@ -1,13 +1,21 @@
 from agents.graph_builder import GraphBuilder
-import logging
+from utils.logger import get_logger
 
-logger = logging.getLogger(__name__)
 
-agent_instance = None
+logger = get_logger(__name__)
 
-def preload_agent():
-    global agent_instance
-    logger.info("⚙️ Preloading GraphBuilder agent...")
-    agent_instance = GraphBuilder()
-    logger.info("✅ Agent preloaded.")
-    return agent_instance
+class AgentLoader:
+    """
+    Instantiates and preloads a GraphBuilder agent into memory.
+    Called at application startup.
+
+    Returns:
+        GraphBuilder: The initialized agent instance.
+    """
+    _instance = None
+
+    @classmethod
+    def get_agent(cls):
+        if cls._instance is None:
+            cls._instance = GraphBuilder()
+        return cls._instance

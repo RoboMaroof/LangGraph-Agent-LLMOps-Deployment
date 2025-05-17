@@ -1,13 +1,9 @@
 import os
 from fastapi import UploadFile
-from dotenv import load_dotenv
 import boto3
 from pathlib import Path
 from urllib.parse import quote_plus
 
-# AWS Configuration
-env_path = Path(__file__).resolve().parents[1] / '.env'
-load_dotenv(dotenv_path=env_path)
 
 AWS_REGION = os.getenv("AWS_REGION")
 S3_BUCKET = os.getenv("S3_BUCKET_NAME")

@@ -1,28 +1,21 @@
 from fastapi import APIRouter, UploadFile, File, Body
 from .index_builder import create_index
 from .upload_handler import save_uploaded_file
-from dotenv import load_dotenv
-from pathlib import Path
-import os
-import logging
+from utils.logger import get_logger
 
-# Load environment variables
-env_path = Path(__file__).resolve().parents[1] / ".env"
-load_dotenv(dotenv_path=env_path)
 
-# Setup logger
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 router = APIRouter()
 
 @router.post("/upload")
-def upload_and_index(file: UploadFile = File(...)):
+async def upload_and_index(file: UploadFile = File(...)):
     """
     Uploads a document to S3 and indexes it into Qdrant.
     """
     try:
         # Upload to S3 and get the S3 URI
-        s3_uri = save_uploaded_file(file)
+        s3_uri = await save_uploaded_file(file)
 
         # Index using the document source from S3
         create_index("docs", s3_uri)

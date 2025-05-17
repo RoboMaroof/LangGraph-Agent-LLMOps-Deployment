@@ -1,11 +1,7 @@
 from typing import Annotated, List
 from typing import TypedDict
-import logging
 from collections import defaultdict
 import time
-import os
-from pathlib import Path
-from dotenv import load_dotenv
 
 from langchain_core.messages import AnyMessage, HumanMessage, AIMessage, ToolMessage
 from langchain_core.runnables import RunnableLambda
@@ -18,20 +14,27 @@ from langgraph.prebuilt import ToolNode, tools_condition
 from langchain_openai import ChatOpenAI
 from langchain_groq import ChatGroq
 from .tools import get_tools
+from utils.logger import get_logger
 
-env_path = Path(__file__).resolve().parents[1]/'.env'
-load_dotenv(dotenv_path=env_path)
-log_level = os.getenv("LOG_LEVEL", "INFO").upper()
-logger = logging.getLogger(__name__)
-logger.setLevel(getattr(logging, log_level, logging.INFO))
 
+logger = get_logger(__name__)
+
+# Global memory store for managing per-session chat histories
 global_memory_store = defaultdict(InMemoryChatMessageHistory)
 
+# Type definition for agent state used in the graph
 class AgentState(TypedDict):
     messages: Annotated[List[AnyMessage], add_messages]
 
 class GraphBuilder:
+    """
+    Constructs a conversational graph using LangGraph with support for memory, LLMs, and tools.
+    """
+
     def __init__(self, model_config: str = "openai:gpt-4o-mini"):
+        """
+        Initializes the graph builder with a selected LLM and associated tools.
+        """
         model_type, model_name = model_config.split(":")
         self.tools = get_tools()
         self.llm = self._init_llm(model_type, model_name).bind_tools(tools=self.tools)
@@ -51,12 +54,22 @@ class GraphBuilder:
 
     @staticmethod
     def _get_session_memory(session_id: str) -> InMemoryChatMessageHistory:
+        """
+        Retrieves or creates chat history for a given session.
+        """
         return global_memory_store[session_id]
 
     def _init_llm(self, model_type: str, model_name: str):
+        """
+        Initializes the selected LLM backend (OpenAI or Groq).
+        """
         return ChatGroq(model=model_name) if model_type == "groq" else ChatOpenAI(model=model_name)
 
     def _llm_tool_node(self, state: AgentState):
+        """
+        Node logic for LLM invocation with message filtering.
+        Filters out invalid or irrelevant messages before invoking the model.
+        """
         raw_messages = state.get("messages", [])
         filtered_messages = [
             m for m in raw_messages
@@ -75,14 +88,19 @@ class GraphBuilder:
         return {"messages": [response]}
 
     def _build_graph(self):
+        """
+        Constructs the full agent state graph with conditional logic for tool usage.
+        """
         builder = StateGraph(AgentState)
         builder.add_node("tool_calling_llm", self._llm_tool_node)
 
+        # Tool node that invokes tools and updates message history
         def tool_node_with_messages(state: AgentState):
             result = self.tool_node.invoke(state)
             new_messages = result.get("messages", [])
             return {"messages": add_messages(state["messages"], new_messages)}
 
+        # Define edges and transitions in the graph
         builder.add_node("tools", tool_node_with_messages)
         builder.add_edge(START, "tool_calling_llm")
         builder.add_conditional_edges("tool_calling_llm", tools_condition)
@@ -91,9 +109,15 @@ class GraphBuilder:
         return builder.compile()
 
     def invoke(self, messages: List[AnyMessage]) -> dict:
+        """
+        Executes the graph with a list of messages, without session memory.
+        """
         return self.graph.invoke({"messages": messages})
 
     def invoke_and_parse(self, messages: List[AnyMessage], session_id: str) -> dict:
+        """
+        Executes the graph using session-aware memory and parses the response.
+        """
         logger.debug("📨 Session %s has %d messages before invoking", session_id, len(messages))
 
         start = time.time()
@@ -109,6 +133,13 @@ class GraphBuilder:
         return self._parse_response(raw_response)
 
     def _parse_response(self, response: dict) -> dict:
+        """
+        Parses the response from the graph into a structured summary including:
+        - Final output from the AI
+        - Tools used
+        - Retrieved data chunks
+        - Full intermediate steps
+        """
         messages = response.get("messages", [])
         logger.debug("🧩 Parsed messages: %s", messages)
 

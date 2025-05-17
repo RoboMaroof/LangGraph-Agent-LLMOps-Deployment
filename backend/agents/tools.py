@@ -1,4 +1,3 @@
-import logging
 from langchain_community.tools import WikipediaQueryRun, ArxivQueryRun
 from langchain_community.utilities import WikipediaAPIWrapper, ArxivAPIWrapper
 from langchain_community.tools.tavily_search import TavilySearchResults
@@ -9,23 +8,36 @@ from llama_index.core.retrievers import VectorIndexRetriever
 from llama_index.llms.openai import OpenAI
 
 from ingestion.index_builder import load_index
+from utils.logger import get_logger
 
-logger = logging.getLogger(__name__)
+
+logger = get_logger(__name__)
+
+# Module-level cache to avoid rebuilding tools multiple times
 _cached_tools = None 
 
 def build_tools():
+    """
+    Constructs and returns a list of tools that can be used by LangChain agents.
+    Includes web search tools, academic search tools, and a document retriever 
+    backed by a vector index (if available).
+
+    Returns:
+        list: A list of LangChain-compatible Tool objects.
+    """
     tools = []
 
-    # Web tools
+    # Add API tools
     tools.append(WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper(top_k_results=1, doc_content_chars_max=200)))
     tools.append(ArxivQueryRun(api_wrapper=ArxivAPIWrapper(top_k_results=1, doc_content_chars_max=200)))
     tools.append(TavilySearchResults())
 
     try:
-        # Load vector index from Qdrant Cloud
+        # Load pre-existing vector index from Qdrant Cloud
         index = load_index()
         if index:
-            llm = OpenAI(model="gpt-4o-mini")
+            # Retretiever with LLM reranking
+            llm = OpenAI(model="gpt-4o-mini")                       #TODO: Make this configurable
             reranker = LLMRerank(top_n=5, llm=llm)
 
             retriever = VectorIndexRetriever(
@@ -34,6 +46,7 @@ def build_tools():
                 postprocessors=[reranker]
             )
 
+            # Wrapper function for retrieval with logging
             def query_debug(query: str):
                 logger.debug(f"🧠 Invoked vector retriever with query: {query}")
                 nodes = retriever.retrieve(query)
@@ -65,6 +78,12 @@ def build_tools():
     return tools
 
 def get_tools():
+    """
+    Returns a cached list of tools to avoid rebuilding them on every request.
+
+    Returns:
+        list: A list of LangChain-compatible Tool objects.
+    """
     global _cached_tools
     if _cached_tools is None:
         _cached_tools = build_tools()
