@@ -2,7 +2,7 @@
 name = "backend"
 version = "0.1.0"
 description = "LangGraph Agent Backend"
-authors = ["Your Name <you@example.com>"]
+authors = ["Maroof Abdul Aziz"]
 package-mode = false
 
 [tool.poetry.dependencies]
@@ -114,6 +114,7 @@ pypdf2 = ">=3.0.1,<4.0.0"
 langgraph = ">=0.4.3,<0.5.0"
 boto3 = "^1.38.18"
 ruff = "^0.11.10"
+pytest = "^8.3.5"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.11.10"
@@ -123,6 +124,9 @@ isort = "^6.0.1"
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+start = "uvicorn app:app --host 0.0.0.0 --port 8000"
 
 [tool.poe.tasks.format]
 sequence = ["ruff-fix", "isort", "black"]

@@ -18,7 +18,6 @@ setup_logging()
 logger = get_logger(__name__)
 
 # TODO: DOCS FOLDER & SQL -> S3 BUCKET
-DEFAULT_DOCS_FOLDER = os.getenv("DEFAULT_DOCS_FOLDER")
 SQL_DB_PATH = os.getenv("SQL_DB_PATH")
 
 

@@ -4,41 +4,32 @@ services:
   backend:
     build:
       context: ./backend
+    container_name: langgraph-backend
     ports:
       - "8000:8000"
     env_file:
       - .env
-    # depends_on:
-    #   - qdrant
     environment:
-      - QDRANT_HOST=${QDRANT_HOST}
-      - AWS_REGION=${AWS_REGION}
-      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
-      - QDRANT_API_KEY=${QDRANT_API_KEY}
-      - QDRANT_COLLECTION=${QDRANT_COLLECTION}
+      QDRANT_HOST: ${QDRANT_HOST}
+      QDRANT_API_KEY: ${QDRANT_API_KEY}
+      QDRANT_COLLECTION: ${QDRANT_COLLECTION}
+      AWS_REGION: ${AWS_REGION}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
     networks:
       - rag_net
 
   frontend:
     build:
       context: ./frontend
+    container_name: langgraph-frontend
     ports:
       - "8501:8501"
     depends_on:
       - backend
     environment:
-      - API_BASE_URL=http://backend:8000
+      API_BASE_URL: http://backend:8000
     networks:
       - rag_net
-
-  # qdrant:
-  #   image: qdrant/qdrant:v1.7.3
-  #   ports:
-  #     - "6333:6333"
-  #   volumes:
-  #     - qdrant_data:/qdrant/storage
-  #   networks:
-  #     - rag_net
 
 volumes:
   qdrant_data:
