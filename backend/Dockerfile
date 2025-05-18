@@ -20,16 +20,21 @@ RUN curl -sSL https://install.python-poetry.org | python3 - && \
 # Set working directory
 WORKDIR /app
 
-# Install Python dependencies using Poetry
+# Copy only dependency files first
 COPY pyproject.toml poetry.lock ./
+
+# Install dependencies
 RUN poetry config virtualenvs.create false && \
     poetry install --no-interaction --no-ansi --no-root
 
 # Copy all source code
 COPY . .
 
-# Expose the app port
+# Set PYTHONPATH so modules are importable inside containers
+ENV PYTHONPATH=/app
+
+# Expose app port
 EXPOSE 8000
 
-# Default command to run FastAPI with Uvicorn
-CMD ["poetry", "run", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run FastAPI app using Uvicorn, from app.main
+CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
