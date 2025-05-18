@@ -1,5 +1,6 @@
 import os
 
+
 class Config:
     QDRANT_HOST = os.getenv("QDRANT_HOST")
     QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")

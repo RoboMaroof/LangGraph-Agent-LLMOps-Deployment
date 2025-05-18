@@ -1,14 +1,13 @@
-import sqlite3
 import os
-import boto3
+import sqlite3
 import tempfile
 from urllib.parse import urlparse
 
+import boto3
+from llama_index.core import Document, SimpleDirectoryReader
 from llama_index.readers.web import SimpleWebPageReader
-from llama_index.core import SimpleDirectoryReader, Document
 
 from utils.logger import get_logger
-
 
 logger = get_logger(__name__)
 s3 = boto3.client("s3")
@@ -20,13 +19,13 @@ def download_s3_file(s3_uri: str) -> str:
     """
     parsed = urlparse(s3_uri)
     bucket = parsed.netloc
-    key = parsed.path.lstrip('/')
+    key = parsed.path.lstrip("/")
 
     temp_dir = tempfile.mkdtemp()
     filename = os.path.basename(key)
     local_path = os.path.join(temp_dir, filename)
 
-    with open(local_path, 'wb') as f:
+    with open(local_path, "wb") as f:
         s3.download_fileobj(bucket, key, f)
 
     logger.info(f"📥 Downloaded file from S3: {s3_uri} → {local_path}")
@@ -86,8 +85,7 @@ def get_documents(source_type, source_path):
             conn.close()
 
         return [
-            Document(text=f"Q: {q.strip()}\nA: {a.strip()}")
-            for q, a in rows if q and a
+            Document(text=f"Q: {q.strip()}\nA: {a.strip()}") for q, a in rows if q and a
         ]
 
     else:

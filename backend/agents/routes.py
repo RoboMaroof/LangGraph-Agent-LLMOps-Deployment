@@ -1,13 +1,14 @@
-from fastapi import APIRouter, Body, HTTPException
 import time
 
+from fastapi import APIRouter, Body, HTTPException
 from langchain_core.messages import HumanMessage
-import agents.agent_loader as loader 
-from utils.logger import get_logger
 
+import agents.agent_loader as loader
+from utils.logger import get_logger
 
 logger = get_logger(__name__)
 router = APIRouter()
+
 
 @router.post("/agent/invoke")
 async def run_agent(inputs: dict = Body(...)):
@@ -36,18 +37,22 @@ async def run_agent(inputs: dict = Body(...)):
 
     # Input validation
     if not isinstance(user_input, str) or not user_input.strip():
-        raise HTTPException(status_code=400, detail="Field 'input' must be a non-empty string.")
+        raise HTTPException(
+            status_code=400, detail="Field 'input' must be a non-empty string."
+        )
 
     # Check if the agent instance is initialized
     try:
         agent = loader.AgentLoader.get_agent()
-    except Exception as e:
+    except Exception:
         logger.exception("❌ Agent initialization failed.")
         raise HTTPException(status_code=500, detail="Agent not ready.")
 
     # Construct message list for the agent
     messages = [HumanMessage(content=user_input)]
-    logger.info("💬 Session %s | Model: %s | Input: %s", session_id, model_config, user_input)
+    logger.info(
+        "💬 Session %s | Model: %s | Input: %s", session_id, model_config, user_input
+    )
 
     try:
         # Invoke the agent and parse the response

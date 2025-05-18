@@ -1,20 +1,22 @@
 import os
 
-from llama_index.vector_stores.qdrant import QdrantVectorStore
-from llama_index.core import VectorStoreIndex
+from llama_index.core import Settings, VectorStoreIndex
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.embeddings.openai import OpenAIEmbedding
-from llama_index.core import Settings
+from llama_index.vector_stores.qdrant import QdrantVectorStore
 
 from ingestion.sources import get_documents, list_s3_documents
-from utils.qdrant_utils import get_qdrant_client, create_collection
 from utils.logger import get_logger
+from utils.qdrant_utils import create_collection, get_qdrant_client
 
 logger = get_logger(__name__)
 
-Settings.embed_model = OpenAIEmbedding(model="text-embedding-ada-002")          # TODO: Make this configurable
+Settings.embed_model = OpenAIEmbedding(
+    model="text-embedding-ada-002"
+)  # TODO: Make this configurable
 
 QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "langgraph-rag-vectordb")
+
 
 def create_index(source_type: str, source_path: str):
     """
@@ -40,7 +42,9 @@ def create_index(source_type: str, source_path: str):
         logger.debug(f"📄 Document {i+1} preview:\n{doc.text[:300]}...\n")
 
     # Split documents into chunks (nodes) suitable for vector storage
-    splitter = SentenceSplitter(chunk_size=512, chunk_overlap=50)                       # TODO: Make chunk size and overlap configurable
+    splitter = SentenceSplitter(
+        chunk_size=512, chunk_overlap=50
+    )  # TODO: Make chunk size and overlap configurable
     nodes = splitter.get_nodes_from_documents(documents)
 
     if not nodes:
@@ -53,12 +57,15 @@ def create_index(source_type: str, source_path: str):
     create_collection()
 
     # Create a Qdrant-backed vector store and build the index
-    vector_store = QdrantVectorStore(client=get_qdrant_client(), collection_name=QDRANT_COLLECTION)
+    vector_store = QdrantVectorStore(
+        client=get_qdrant_client(), collection_name=QDRANT_COLLECTION
+    )
     index = VectorStoreIndex.from_vector_store(vector_store)
     index.insert_nodes(nodes)
 
     logger.info("✅ Documents indexed and stored in Qdrant.")
     return index
+
 
 def create_empty_index():
     """
@@ -72,8 +79,11 @@ def create_empty_index():
 
     # Ensure the Qdrant collection exists before storing vectors
     create_collection()
-    vector_store = QdrantVectorStore(client=get_qdrant_client(), collection_name=QDRANT_COLLECTION)
+    vector_store = QdrantVectorStore(
+        client=get_qdrant_client(), collection_name=QDRANT_COLLECTION
+    )
     return VectorStoreIndex.from_vector_store(vector_store)
+
 
 def load_index():
     """
@@ -90,7 +100,9 @@ def load_index():
         logger.warning("⚠️ Vector index not found. Checking S3 for documents...")
 
         # Attempt to retrieve documents from a pre-configured S3 bucket
-        s3_files = list_s3_documents(bucket="langgraph-docs", prefix="uploads/")        # TODO: Make bucket configurable
+        s3_files = list_s3_documents(
+            bucket="langgraph-docs", prefix="uploads/"
+        )  # TODO: Make bucket configurable
         if s3_files:
             logger.info("📄 Found documents in S3. Ingesting and creating index...")
             index = None
@@ -105,5 +117,7 @@ def load_index():
             return create_empty_index()
 
     # Load the existing index from Qdrant
-    vector_store = QdrantVectorStore(client=get_qdrant_client(), collection_name=QDRANT_COLLECTION)
+    vector_store = QdrantVectorStore(
+        client=get_qdrant_client(), collection_name=QDRANT_COLLECTION
+    )
     return VectorStoreIndex.from_vector_store(vector_store)

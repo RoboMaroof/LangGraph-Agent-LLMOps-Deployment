@@ -1,8 +1,8 @@
 from agents.graph_builder import GraphBuilder
 from utils.logger import get_logger
 
-
 logger = get_logger(__name__)
+
 
 class AgentLoader:
     """
@@ -12,6 +12,7 @@ class AgentLoader:
     Returns:
         GraphBuilder: The initialized agent instance.
     """
+
     _instance = None
 
     @classmethod

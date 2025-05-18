@@ -1,30 +1,31 @@
-from typing import Annotated, List
-from typing import TypedDict
-from collections import defaultdict
 import time
+from collections import defaultdict
+from typing import Annotated, List, TypedDict
 
-from langchain_core.messages import AnyMessage, HumanMessage, AIMessage, ToolMessage
+from langchain_core.chat_history import InMemoryChatMessageHistory
+from langchain_core.messages import AIMessage, AnyMessage, HumanMessage, ToolMessage
 from langchain_core.runnables import RunnableLambda
 from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_core.chat_history import InMemoryChatMessageHistory
+from langchain_groq import ChatGroq
+from langchain_openai import ChatOpenAI
+from langgraph.graph import START, StateGraph
 from langgraph.graph.message import add_messages
-from langgraph.graph import StateGraph, START
 from langgraph.prebuilt import ToolNode, tools_condition
 
-from langchain_openai import ChatOpenAI
-from langchain_groq import ChatGroq
-from .tools import get_tools
 from utils.logger import get_logger
 
+from .tools import get_tools
 
 logger = get_logger(__name__)
 
 # Global memory store for managing per-session chat histories
 global_memory_store = defaultdict(InMemoryChatMessageHistory)
 
+
 # Type definition for agent state used in the graph
 class AgentState(TypedDict):
     messages: Annotated[List[AnyMessage], add_messages]
+
 
 class GraphBuilder:
     """
@@ -41,15 +42,15 @@ class GraphBuilder:
         self.tool_node = ToolNode(self.tools)
         self.graph = self._build_graph()
 
-        graph_input_adapter = RunnableLambda(lambda x: {
-            "messages": add_messages(x["messages"], x["input"])
-        })
+        graph_input_adapter = RunnableLambda(
+            lambda x: {"messages": add_messages(x["messages"], x["input"])}
+        )
 
         self.graph_with_memory = RunnableWithMessageHistory(
             graph_input_adapter | self.graph,
             self._get_session_memory,
             input_messages_key="input",
-            history_messages_key="messages"
+            history_messages_key="messages",
         )
 
     @staticmethod
@@ -63,7 +64,11 @@ class GraphBuilder:
         """
         Initializes the selected LLM backend (OpenAI or Groq).
         """
-        return ChatGroq(model=model_name) if model_type == "groq" else ChatOpenAI(model=model_name)
+        return (
+            ChatGroq(model=model_name)
+            if model_type == "groq"
+            else ChatOpenAI(model=model_name)
+        )
 
     def _llm_tool_node(self, state: AgentState):
         """
@@ -72,9 +77,10 @@ class GraphBuilder:
         """
         raw_messages = state.get("messages", [])
         filtered_messages = [
-            m for m in raw_messages
-            if isinstance(m, (HumanMessage, ToolMessage)) or
-            (isinstance(m, AIMessage) and (m.content or m.tool_calls))
+            m
+            for m in raw_messages
+            if isinstance(m, (HumanMessage, ToolMessage))
+            or (isinstance(m, AIMessage) and (m.content or m.tool_calls))
         ]
 
         if not filtered_messages:
@@ -118,15 +124,17 @@ class GraphBuilder:
         """
         Executes the graph using session-aware memory and parses the response.
         """
-        logger.debug("📨 Session %s has %d messages before invoking", session_id, len(messages))
+        logger.debug(
+            "📨 Session %s has %d messages before invoking", session_id, len(messages)
+        )
 
         start = time.time()
         raw_response = self.graph_with_memory.invoke(
             {
                 "input": messages,
-                "messages": self._get_session_memory(session_id).messages
+                "messages": self._get_session_memory(session_id).messages,
             },
-            config={"configurable": {"session_id": session_id}}
+            config={"configurable": {"session_id": session_id}},
         )
         logger.info("🧠 Full graph invocation took %.2f seconds", time.time() - start)
 
@@ -159,35 +167,33 @@ class GraphBuilder:
                         tool_name = call.get("function", {}).get("name")
                         args = call.get("function", {}).get("arguments")
                         tools_used.append(tool_name)
-                        intermediate_steps.append({
-                            "type": "ai_tool_call", "tool": tool_name, "args": args
-                        })
+                        intermediate_steps.append(
+                            {"type": "ai_tool_call", "tool": tool_name, "args": args}
+                        )
                 else:
                     final_output = msg.content
-                    intermediate_steps.append({
-                        "type": "ai_final_response", "content": msg.content
-                    })
+                    intermediate_steps.append(
+                        {"type": "ai_final_response", "content": msg.content}
+                    )
 
             elif isinstance(msg, ToolMessage):
                 tool_name = getattr(msg, "name", None)
                 content = msg.content
                 artifact = getattr(msg, "artifact", {})
 
-                intermediate_steps.append({
-                    "type": "tool_response",
-                    "tool": tool_name,
-                    "content": content
-                })
+                intermediate_steps.append(
+                    {"type": "tool_response", "tool": tool_name, "content": content}
+                )
 
                 if isinstance(artifact, dict) and "results" in artifact:
                     for result in artifact["results"]:
-                        retrieved_chunks.append({
-                            "tool": tool_name, "type": "result", "data": result
-                        })
+                        retrieved_chunks.append(
+                            {"tool": tool_name, "type": "result", "data": result}
+                        )
                 else:
-                    retrieved_chunks.append({
-                        "tool": tool_name, "type": "text", "data": content
-                    })
+                    retrieved_chunks.append(
+                        {"tool": tool_name, "type": "text", "data": content}
+                    )
         logger.debug("🛠️ Tools used by LLM: %s", tools_used)
         logger.debug("📦 Retrieved chunks: %s", retrieved_chunks)
         return {
