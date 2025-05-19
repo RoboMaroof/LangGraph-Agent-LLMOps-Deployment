@@ -15,7 +15,7 @@ if 'vector_store_ready' not in st.session_state:
     st.session_state.vector_store_ready = False
 
 st.set_page_config(page_title="Langchain RAG Agent", layout="centered")
-st.title('🧠 LangGraph Agent Chat App')
+st.title('LangGraph Agent Chat App')
 
 with st.expander("📥 Ingest Custom Data into Vector Store (if required)", expanded=False):
     st.markdown("##### Select a Data Source")
@@ -52,8 +52,6 @@ with st.expander("📥 Ingest Custom Data into Vector Store (if required)", expa
             else:
                 st.warning("⚠️ Please upload a valid file.")
 
-st.markdown("---")
-st.markdown("## 🤖 Chat with Your Documents")
 
 if st.button("🧹 Clear Chat"):
     st.session_state.chat_history = []

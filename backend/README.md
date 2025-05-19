@@ -1,26 +1,27 @@
-# 🧠 LangGraph Agent API
+# LangGraph Agent Backend
 
 A modular, production-ready backend for building intelligent agent workflows using LangGraph, FastAPI, Qdrant, and Poetry — all containerized via Docker. This system supports vector-based document retrieval, tool-augmented LLM responses, and seamless integration with local/S3 sources.
 
 ---
 
-## 🚀 Features
+## Features
 
-- ✅ Conversational agents with LangGraph + LangChain
-- ✅ Tool-augmented LLM responses (Wikipedia, Arxiv, Tavily, Vector DB)
-- ✅ Qdrant vector database integration
-- ✅ Upload or ingest documents from S3, SQLite, or websites
-- ✅ Session-based memory & history
-- ✅ FastAPI REST API
-- ✅ Fully containerized (Docker + Poetry)
-- ✅ Modular, extensible, and ready for production
+- Conversational agents with LangGraph + LangChain
+- Tool-augmented LLM responses (Wikipedia, Arxiv, Tavily, Vector DB)
+- Qdrant vector database integration
+- Upload or ingest documents from S3, SQLite, or websites
+- Session-based memory & history
+- FastAPI REST API
+- Fully containerized (Docker + Poetry)
+- Modular, extensible, and ready for production
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```plaintext
-├── app.py           
+├── app/
+│ ├── main.py             
 ├── agents/
 │ ├── routes.py         
 │ ├── agent_loader.py  
@@ -44,7 +45,7 @@ A modular, production-ready backend for building intelligent agent workflows usi
 
 ---
 
-## ⚙️ Prerequisites
+## Prerequisites
 
 - [Docker](https://www.docker.com/)
 - [Poetry](https://python-poetry.org/) (if running outside container)
@@ -53,9 +54,9 @@ A modular, production-ready backend for building intelligent agent workflows usi
 
 ---
 
-## 📦 Quick Start (with Docker)
+## Quick Start (with Docker)
 
-### 1. 🧪 Create `.env` File
+### 1. Create `.env` File
 
 ```env
 QDRANT_HOST=https://your-qdrant-instance
@@ -70,7 +71,7 @@ LOG_LEVEL=DEBUG
 
 ---
 
-### 2. 🐳 Build and Run the Docker Container
+### 2. Build and Run the Docker Container
 
 ```bash
 # Build the image
@@ -83,11 +84,11 @@ docker run --env-file .env -p 8000:8000 langgraph-agent
 The server will:
 - Set up Qdrant collection if needed
 - Ingest documents if configured
-- Preload your conversational agent
+- Preload conversational agent
 
 ---
 
-## 📡 API Endpoints
+## API Endpoints
 
 `🔗 /agent/invoke`
 ```http
@@ -122,7 +123,7 @@ Manually ingest a source:
 
 ---
 
-## 🧩 Supported Source Types
+## Supported Source Types
 
 | Type     | Description                         |
 |----------|-------------------------------------|
@@ -132,7 +133,7 @@ Manually ingest a source:
 
 ---
 
-## 🔌 Tools Used
+## Tools Used
 
 | Tool              | Description                             |
 |-------------------|-----------------------------------------|
