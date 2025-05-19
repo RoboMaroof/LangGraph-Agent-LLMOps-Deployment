@@ -88,8 +88,7 @@ docker run --env-file .env -p 8000:8000 langgraph-app
 
 # 4. Run frontend
 cd ../frontend
-npm install
-npm run dev
+streamlit run app.py
 ```
 
 ---
