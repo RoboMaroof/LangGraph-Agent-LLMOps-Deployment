@@ -77,7 +77,17 @@ jobs:
             QDRANT_COLLECTION=langgraph-rag-vectordb
             EOF
 
-            echo "🧹 Cleaning old containers..."
+            echo "🧼 Stopping containers on ports 8000 (backend) and 8501 (frontend)..."
+
+            # Stop and remove any containers using port 8000
+            docker ps -q --filter "publish=8000" | xargs -r docker stop
+            docker ps -a -q --filter "publish=8000" | xargs -r docker rm
+
+            # Stop and remove any containers using port 8501
+            docker ps -q --filter "publish=8501" | xargs -r docker stop
+            docker ps -a -q --filter "publish=8501" | xargs -r docker rm
+
+            echo "🧹 Bringing down previous compose setup (if any)..."
             docker-compose down
 
             echo "🐳 Rebuilding and starting containers..."
