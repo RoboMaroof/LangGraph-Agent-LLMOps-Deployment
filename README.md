@@ -8,23 +8,14 @@ This repository contains a complete **LangGraph-based LLMOps platform** for docu
 
 ## Tech Stack
 
-### Backend  
-FastAPI, LangGraph, LangChain, LlamaIndex, Qdrant, OpenAI API, Groq API, SQLite, Boto3
-
-### Frontend  
-Streamlit
-
-### Tooling & Utilities  
-Poetry, Python-dotenv, Logging
-
-### Vector Indexing & Embeddings  
-SentenceSplitter, OpenAIEmbedding, LLMRerank, QdrantVectorStore
-
-### Testing & CI/CD  
-Pytest, GitHub Actions, Docker, SSH, SCP, Appleboy Actions
-
-### Cloud & Deployment  
-AWS EC2, Amazon S3, Qdrant Cloud, Environment Variables
+| Category                     | Technologies                                                                 |
+|-----------------------------|------------------------------------------------------------------------------|
+| **Backend**                 | FastAPI, LangGraph, LangChain, LlamaIndex, Qdrant, OpenAI API, Groq API, SQLite, Boto3 |
+| **Frontend**                | Streamlit                                                                    |
+| **Tooling & Utilities**     | Poetry, Python-dotenv, Logging                                               |
+| **Vector Indexing & Embeddings** | SentenceSplitter, OpenAIEmbedding, LLMRerank, QdrantVectorStore               |
+| **Testing & CI/CD**         | Pytest, GitHub Actions, Docker, SSH, SCP, Appleboy Actions                   |
+| **Cloud & Deployment**      | AWS EC2, Amazon S3, Qdrant Cloud, Environment Variables                      |
 
 ---
 
